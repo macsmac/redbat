@@ -1,4 +1,4 @@
-![](https://travis-ci.org/RedFoxCode/redbat.svg?branch=master)
+[![Build Status](https://travis-ci.org/RedFoxCode/redbat.svg?branch=master)](https://travis-ci.org/RedFoxCode/redbat)
 
 # RedBat
 
@@ -14,7 +14,7 @@
 * Middlewares
 * One handler for multiple listeners
 
-# Intallation
+# Installation
 
 ```sh
 npm i redbat
