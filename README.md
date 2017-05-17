@@ -1,0 +1,2 @@
+# redbat
+Implementation of EventEmitter
