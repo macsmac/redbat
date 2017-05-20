@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.org/RedFoxCode/redbat.svg?branch=master)](https://travis-ci.org/RedFoxCode/redbat)
-
 # RedBat
+
+[![Build Status](https://travis-ci.org/RedFoxCode/redbat.svg?branch=master)](https://travis-ci.org/RedFoxCode/redbat)
 
 **redbat** is an implementation of Node.JS [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter) class with some extra-features.
 
