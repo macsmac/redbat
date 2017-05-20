@@ -16,7 +16,8 @@
     "mocha": "^3.4.1"
   },
   "scripts": {
-    "test": "echo \"TODO: tests\""
+    "test": "node ./node_modules/mocha/bin/_mocha",
+    "build": "node ./node_modules/gulp/bin/gulp"
   },
   "repository": {
     "type": "git",
