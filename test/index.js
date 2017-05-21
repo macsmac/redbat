@@ -1,7 +1,3 @@
-/*
-This file is not finished
-*/
-
 const redbat = require("../src");
 const assert = require("assert");
 const EventEmitter = redbat.EventEmitter;
@@ -9,31 +5,43 @@ const EventEmitter = redbat.EventEmitter;
 var emitter;
 
 describe("Init", function() {
-	it("Should create EventEmitter instance", function() {
+	it("Should create EventEmitter instance", function(next) {
 		emitter = new EventEmitter();
 
 		assert.ok(emitter);
+
+		next(); 
 	});
 });
 
 describe("Namespaces", function() {
-	it("namespace() should return default namespace", function() {
+	it("namespace() should return default namespace", function(next) {
 		assert.ok(emitter.namespace());
+
+		next();
 	});
 
-	it("namespace() should create and return new namespace", function() {
+	it("namespace() should create and return new namespace", function(next) {
 		assert.ok(emitter.namespace("namespace1"));
+
+		next();
 	});
 
-	it("on,once,emit,use methods should exist", function() {
+	it("on,once,emit,use methods should exist", function(next) {
 		assert.ok(emitter.on);
 		assert.ok(emitter.once);
 		assert.ok(emitter.emit);
 		assert.ok(emitter.use);
+
+		next();
 	});
 });
 
 describe("Listeners", function() {
+	beforeEach(function() {
+		emitter.namespace().listeners = [];
+	});
+
 	it("Should create and call listener once", function(next) {
 		emitter.once("event2", function() {
 			assert.ok(false);
@@ -57,14 +65,43 @@ describe("Listeners", function() {
 	});
 
 	it("Listener should expire after 100 milliseconds", function(next) {
+		var s = [];
+
 		emitter.on("ttl", 100, function() {
-			next();
+			s.push(1);
 		}).emit("ttl");
 
-		setTimeout(() => emitter.emit("ttl"), 200);
+		setTimeout(function() {
+			emitter.emit("ttl");
+			assert.equal(s.join(""), "1");
+			next();
+		}, 200);
 	});
+
+	it("Listener should be triggered by ev1,ev2 events", function(next) {
+		emitter.on(["ev1", "ev2"], function(s) {
+			if (s) {
+				next();
+			}
+		}).emit("ev1").emit("ev2", 1);
+	})
 });
 
-/*
-TODO: add a lot more tests .-.
-*/
+describe("Middlewares", function() {
+	it("Should call sequence of 2 middlewares", function(next) {
+		var s = [];
+
+		emitter.use(function(args, nextm) {
+			s.push(1);
+			setTimeout(() => nextm(), 250);
+		});
+		emitter.use(function(args, nextm) {
+			s.push(2);
+			setTimeout(() => nextm(), 250);
+		});
+		emitter.on("just an event", function() {
+			assert.equal(s.join(""), "12");
+			next();
+		}).emit("just an event");
+	});
+});
