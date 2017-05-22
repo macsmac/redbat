@@ -1,4 +1,5 @@
 const EventEmitter = require("./eventemitter");
+const _ = require("lodash");
 
 module.exports = function() {
 	var self = this;
@@ -10,7 +11,7 @@ module.exports = function() {
 
 		EventEmitter.apply(this);
 
-		Object.keys(self.methods).forEach(function(method) {
+		_.each(_.keys(self.methods), function(method) {
 			if (gen[method]) {
 				throw new Error("Method '" + method + "' already exists");
 			}

@@ -1,4 +1,5 @@
 const Namespace = require("./namespace");
+const _ = require("lodash");
 
 module.exports = function() {
 	this.DEFAULT_NAMESPACE = "default";
@@ -20,7 +21,7 @@ module.exports = function() {
 	this.on = this.namespace().on;
 	this.once = this.namespace().once;
 	this.emit = function() {
-		this.connected.forEach(e => e.emit.apply(e, arguments));
+		_.each(this.connected, e => e.emit.apply(e, arguments));
 		return this.namespace().emit.apply(this, arguments);
 	};
 	this.use = this.namespace().use;

@@ -1,5 +1,6 @@
 const overload = require("overload-js");
 const async = require("async");
+const _ = require("lodash");
 
 const o = overload.o;
 
@@ -41,7 +42,7 @@ module.exports = function() {
 		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
 
 	this.emit = function(type, callback) {
-		const data = [].slice.call(arguments, 1);
+		const data = _.slice(arguments, 1);
 
 		namespace.executeMiddlewares(type, data, function() {
 			namespace.executeListeners(type, data, function() {
@@ -64,7 +65,11 @@ module.exports = function() {
 		return Math.round(Math.random() * 1000000);
 	}
 	this.getListeners = function(query) {
-		return namespace.listeners.filter(function(e, i) {
+		return _.filter(namespace.listeners, function(e, i) {
+			if (!e) {
+				return false;
+			}
+
 			if (e.ttl && e.ttl < Date.now()) {
 				namespace.listeners.splice(i, 1);
 				return false;
@@ -74,12 +79,12 @@ module.exports = function() {
 				namespace.listeners.splice(i, 1);
 			}
 
-			return e.type.indexOf(query) !== -1;
+			return _.indexOf(e.type, query) !== -1;
 		});
 	}
-	this.removeListener = function(query) {
+	/*this.removeListener = function(query) {
 		return namespace.listeners.splice(namespace.listeners.findIndex(e => e.type.indexOf(query) !== -1), 1);
-	}
+	}*/
 	this.executeListeners = function(type, data, callback) {
 		const listeners = namespace.getListeners(type);
 		const shouldCallWithNext = listeners.length > 1;
@@ -90,7 +95,7 @@ module.exports = function() {
 
 		if (shouldCallWithNext) {
 			async.eachSeries(listeners, function(listener, callback) {
-				listener.handler.apply(listener, data.concat(function(error) {
+				listener.handler.apply(listener, _.concat(data, function(error) {
 					callback(error || null);
 				}));
 			}, function(error) {
