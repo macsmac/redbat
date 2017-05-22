@@ -1,5 +1,12 @@
+const BABEL_CONF = {
+	"presets": ["es2015", "stage-0"],
+	"plugins": ["transform-runtime"]
+}
+
 const gulp = require("gulp");
 const concat = require("gulp-concat-js");
+const babel = require("gulp-babel");
+const uglify = require("gulp-uglify");
 
 gulp.task("js", function() {
 	return gulp.src("./src/**/*.js")
@@ -7,6 +14,8 @@ gulp.task("js", function() {
 			target: "index.js",
 			entry: "./index.js"
 		}))
+		.pipe(babel(BABEL_CONF))
+		.pipe(uglify())
 		.pipe(gulp.dest("./build"));
 });
 

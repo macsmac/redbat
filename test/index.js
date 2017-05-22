@@ -1,4 +1,4 @@
-const redbat = require("../src");
+const redbat = require("../build");
 const assert = require("assert");
 const EventEmitter = redbat.EventEmitter;
 
