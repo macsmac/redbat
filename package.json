@@ -5,6 +5,7 @@
   "main": "./build/index",
   "dependencies": {
     "async": "^2.4.0",
+    "lodash": "^4.17.4",
     "overload-js": "^1.0.0"
   },
   "devDependencies": {
