@@ -20,6 +20,7 @@ module.exports = function() {
 
 	this.on = this.namespace().on;
 	this.once = this.namespace().once;
+	this.wait = this.namespace().wait;
 	this.emit = function() {
 		_.each(this.connected, e => e.emit.apply(e, arguments));
 		return this.namespace().emit.apply(this, arguments);

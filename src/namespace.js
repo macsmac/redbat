@@ -11,8 +11,17 @@ module.exports = function() {
 	this.middlewares = [];
 
 	this._on = function(type, ttl, once, handler) {
+		var _resolve;
+		var noHandler = !handler;
+
 		if (!Array.isArray(type)) {
 			type = [type];
+		}
+
+		if (noHandler) {
+			handler = function() { 
+				_resolve(_.slice(arguments));
+			}
 		}
 
 		const listener = {
@@ -24,7 +33,11 @@ module.exports = function() {
 
 		namespace.listeners.push(listener);
 
-		return namespace;
+		return noHandler ? (new Promise(function(resolve, reject) {
+			_resolve = function(args) {
+				resolve.apply(namespace, args);
+			}
+		})) : namespace;
 	}
 	/*
 		Probably should refactor this ;-;
@@ -40,6 +53,7 @@ module.exports = function() {
 	this.once = overload()
 		.args(o.any(String, Array), Function).use((type, handler) => namespace._on(type, 0, true, handler))
 		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
+	this.wait = (type, ttl) => namespace._on(type, ttl, true, undefined);
 
 	this.emit = function(type, callback) {
 		const data = _.slice(arguments, 1);
