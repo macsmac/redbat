@@ -127,9 +127,14 @@ module.exports = function() {
 	}
 	this.executeMiddlewares = function(type, data, callback) {
 		async.eachSeries(namespace.middlewares, function(handler, callback) {
-			handler(data, function(error) {
+			const next = function(error) {
 				callback(error || null);
-			});
+			}
+			const args = [type, data, handler.length > 2 ? next : undefined];
+
+			handler.apply(namespace, args);
+
+			if (handler.length === 2) next();
 		}, callback);
 	}
 

@@ -64,6 +64,22 @@ describe("Listeners", function() {
 		}).emit("event1").emit("event1");
 	});
 
+	it("Should call sequence of 2 listeners with next", function(next) {
+		var s = [];
+
+		emitter.on("ev", function(nextm) {
+			s.push(1);
+			setTimeout(() => nextm(), 250);
+		}).on("ev", function(nextm) {
+			s.push(2);
+
+			assert.equal(s.join(""), "12");
+
+			nextm();
+			next();
+		}).emit("ev");
+	});
+
 	it("Listener should expire after 100 milliseconds", function(next) {
 		var s = [];
 
@@ -88,16 +104,37 @@ describe("Listeners", function() {
 });
 
 describe("Middlewares", function() {
-	it("Should call sequence of 2 middlewares", function(next) {
+	beforeEach(function() {
+		emitter.namespace().middlewares = [];
+		emitter.namespace().listeners = [];
+	});
+
+	it("Should call sequence of 2 middlewares with type 'just an event'", function(next) {
 		var s = [];
 
-		emitter.use(function(args, nextm) {
+		emitter.use(function(type, args, nextm) {
+			assert.equal(type, "just an event");
 			s.push(1);
 			setTimeout(() => nextm(), 250);
 		});
-		emitter.use(function(args, nextm) {
+		emitter.use(function(type, args, nextm) {
 			s.push(2);
 			setTimeout(() => nextm(), 250);
+		});
+		emitter.on("just an event", function() {
+			assert.equal(s.join(""), "12");
+			next();
+		}).emit("just an event");
+	});
+
+	it("Should call sequence of 2 middlewares without next", function(next) {
+		var s = [];
+
+		emitter.use(function(type, args) {
+			s.push(1);
+		});
+		emitter.use(function(type, args) {
+			s.push(2);
 		});
 		emitter.on("just an event", function() {
 			assert.equal(s.join(""), "12");
