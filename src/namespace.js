@@ -14,10 +14,6 @@ module.exports = function() {
 		var _resolve;
 		var noHandler = !handler;
 
-		if (!Array.isArray(type)) {
-			type = [type];
-		}
-
 		if (noHandler) {
 			handler = function() { 
 				_resolve(_.slice(arguments));
@@ -55,15 +51,11 @@ module.exports = function() {
 		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
 	this.wait = (type, ttl) => namespace._on(type, ttl, true, undefined);
 
-	this.emit = function(type, callback) {
+	this.emit = function(type) {
 		const data = _.slice(arguments, 1);
 
 		namespace.executeMiddlewares(type, data, function() {
-			namespace.executeListeners(type, data, function() {
-				if (typeof callback === "function") {
-					callback();
-				}
-			});
+			namespace.executeListeners(type, data);
 		});
 
 		return namespace;
@@ -75,17 +67,9 @@ module.exports = function() {
 	 	return namespace;
 	}
 
-	this.getRandomID = function() {
-		return Math.round(Math.random() * 1000000);
-	}
 	this.getListeners = function(query) {
 		return _.filter(namespace.listeners, function(e, i) {
 			if (!e) {
-				return false;
-			}
-
-			if (e.ttl && e.ttl < Date.now()) {
-				namespace.listeners.splice(i, 1);
 				return false;
 			}
 
@@ -93,18 +77,27 @@ module.exports = function() {
 				namespace.listeners.splice(i, 1);
 			}
 
-			return _.indexOf(e.type, query) !== -1;
+			if (!e.ttl && e.type === query) {
+				return true;
+			}
+
+			if (e.ttl && e.ttl < Date.now()) {
+				namespace.listeners.splice(i, 1);
+				return false;
+			}
+
+			return typeof e.type === "object" ? _.indexOf(e.type, query) !== -1 : e.type === query;
 		});
 	}
 	/*this.removeListener = function(query) {
 		return namespace.listeners.splice(namespace.listeners.findIndex(e => e.type.indexOf(query) !== -1), 1);
 	}*/
-	this.executeListeners = function(type, data, callback) {
+	this.executeListeners = function(type, data) {
 		const listeners = namespace.getListeners(type);
 		const shouldCallWithNext = listeners.length > 1;
 
 		if (!listeners.length) {
-			return callback();
+			return;
 		}
 
 		if (shouldCallWithNext) {
@@ -116,16 +109,18 @@ module.exports = function() {
 				if (error) {
 					throw error;
 				}
-
-				callback();
 			});
 		} else {
-			listeners[0].handler.apply(listeners[0], data);
+			if (!data.length || data.length === 1) { // just for optimization, want to beat eventemitter2 lol
+				return listeners[0].handler(data[0]);
+			}
 
-			callback();
+			listeners[0].handler.apply(listeners[0], data);
 		}
 	}
 	this.executeMiddlewares = function(type, data, callback) {
+		if (!namespace.middlewares.length) return callback();
+
 		async.eachSeries(namespace.middlewares, function(handler, callback) {
 			const next = function(error) {
 				callback(error || null);

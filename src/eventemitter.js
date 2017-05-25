@@ -6,6 +6,8 @@ module.exports = function() {
 	this.namespaces = {};
 	this.connected = [];
 
+	this.namespaces[this.DEFAULT_NAMESPACE] = new Namespace();
+
 	this.namespace = function(name) {
 		if (!name) return this.namespaces[this.DEFAULT_NAMESPACE];
 
@@ -16,17 +18,32 @@ module.exports = function() {
 		}
 	}
 
-	this.namespaces[this.DEFAULT_NAMESPACE] = new Namespace();
+	const namespace = this.namespace();
 
-	this.on = this.namespace().on;
-	this.once = this.namespace().once;
-	this.wait = this.namespace().wait;
+	this.on = namespace.on;
+	this.onFast = function(event, handler) {
+		namespace.listeners.push({
+			type: event,
+			handler: handler
+		});
+		return namespace;
+	}
+	this.once = namespace.once;
+	this.onceFast = function(event, handler) {
+		namespace.listeners.push({
+			type: event,
+			handler: handler,
+			once: true
+		});
+		return namespace;
+	}
+	this.wait = namespace.wait;
 	this.emit = function() {
-		_.each(this.connected, e => e.emit.apply(e, arguments));
-		return this.namespace().emit.apply(this, arguments);
+		if (this.connected.length) _.each(this.connected, e => e.emit.apply(e, arguments));
+		return namespace.emit.apply(this, arguments);
 	};
-	this.use = this.namespace().use;
-	this.listener = this.namespace().getListeners;
+	this.use = namespace.use;
+	this.listener = namespace.getListeners;
 	this.pipe = function(emitter) {
 		this.connected.push(emitter);
 	}

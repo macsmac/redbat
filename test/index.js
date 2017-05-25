@@ -1,4 +1,4 @@
-const redbat = require("../build");
+const redbat = require("../src");
 const assert = require("assert");
 const EventEmitter = redbat.EventEmitter;
 
@@ -69,7 +69,7 @@ describe("Listeners", function() {
 
 		emitter.on("ev", function(nextm) {
 			s.push(1);
-			setTimeout(() => nextm(), 250);
+			nextm();
 		}).on("ev", function(nextm) {
 			s.push(2);
 
