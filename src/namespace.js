@@ -52,6 +52,11 @@ module.exports = function() {
 		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
 	this.wait = (type, ttl) => namespace._on(type, ttl, true, undefined);
 
+	this.delete = function(query) {
+		namespace.getListeners(query, true);
+		return namespace;
+	}
+
 	this.pipe = function() {
 		[].push.apply(namespace.connected, arguments);
 		return namespace;
@@ -102,7 +107,7 @@ module.exports = function() {
 	 	return namespace;
 	}
 
-	this.getListeners = function(query) {
+	this.getListeners = function(query, del) {
 		return _.filter(namespace.listeners, function(e, i) {
 			if (!e) {
 				return false;
@@ -112,21 +117,25 @@ module.exports = function() {
 				namespace.listeners.splice(i, 1);
 			}
 
-			if (!e.ttl && e.type === query) {
+			/*if (!e.ttl && e.type === query) {
 				return true;
-			}
+			}*/
 
 			if (e.ttl && e.ttl < Date.now()) {
 				namespace.listeners.splice(i, 1);
 				return false;
 			}
 
-			return typeof e.type === "object" ? _.indexOf(e.type, query) !== -1 : e.type === query;
+			const ok = typeof e.type === "object" ? _.indexOf(e.type, query) !== -1 : e.type === query;
+
+			if (ok && del) {
+				namespace.listeners.splice(i, 1);
+			}
+
+			return ok;
 		});
 	}
-	/*this.removeListener = function(query) {
-		return namespace.listeners.splice(namespace.listeners.findIndex(e => e.type.indexOf(query) !== -1), 1);
-	}*/
+
 	this.executeListeners = function(type, data) {
 		const listeners = namespace.getListeners(type);
 		const shouldCallWithNext = listeners.length > 1;
