@@ -100,7 +100,21 @@ describe("Listeners", function() {
 				next();
 			}
 		}).emit("ev1").emit("ev2", 1);
-	})
+	});
+
+	it("Should pipe events from namespace 'foo' to 'bar'", function(next) {
+		emitter.namespace("bar")
+			.on("test", function() {
+				next();
+			});
+
+		emitter.namespace("foo")
+			.on("test", function() {
+				assert.ok(false);
+			})
+			.pipe(emitter.namespace("bar"))
+			.emit("test");
+	});
 });
 
 describe("Middlewares", function() {

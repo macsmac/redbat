@@ -9,6 +9,7 @@ module.exports = function() {
 
 	this.listeners = [];
 	this.middlewares = [];
+	this.connected = [];
 
 	this._on = function(type, ttl, once, handler) {
 		var _resolve;
@@ -51,14 +52,48 @@ module.exports = function() {
 		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
 	this.wait = (type, ttl) => namespace._on(type, ttl, true, undefined);
 
+	this.pipe = function() {
+		[].push.apply(namespace.connected, arguments);
+		return namespace;
+	}
+
+	this.onFast = function(event, handler) {
+		namespace.listeners.push({
+			type: event,
+			handler: handler
+		});
+		return namespace;
+	}
+	this.onceFast = function(event, handler) {
+		namespace.listeners.push({
+			type: event,
+			handler: handler,
+			once: true
+		});
+		return namespace;
+	}
+
 	this.emit = function(type) {
-		const data = _.slice(arguments, 1);
+		const args = _.slice(arguments);
+		const data = _.slice(args, 1);
+
+		_.each(namespace.connected, e => e && e.emit.apply(e.namespace ? e.namespace() : e, args));
 
 		namespace.executeMiddlewares(type, data, function() {
 			namespace.executeListeners(type, data);
 		});
 
 		return namespace;
+	}
+
+	this.emitFast = function(type) {
+		const data = _.slice(arguments, 1);
+
+		_.each(namespace.listeners, function(listener) {
+			if (typeof listener.type === "string" ? listener.type === type : _.indexOf(listener.type, type) !== -1) {
+				listener.handler.apply(namespace, data);
+			} 
+		});
 	}
 
 	this.use = function(handler) {

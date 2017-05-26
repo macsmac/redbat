@@ -1,10 +1,9 @@
 const Namespace = require("./namespace");
 const _ = require("lodash");
 
-module.exports = function() {
+module.exports = function(fast) {
 	this.DEFAULT_NAMESPACE = "default";
 	this.namespaces = {};
-	this.connected = [];
 
 	this.namespaces[this.DEFAULT_NAMESPACE] = new Namespace();
 
@@ -21,31 +20,25 @@ module.exports = function() {
 	const namespace = this.namespace();
 
 	this.on = namespace.on;
-	this.onFast = function(event, handler) {
-		namespace.listeners.push({
-			type: event,
-			handler: handler
-		});
-		return namespace;
-	}
+	this.onFast = namespace.onFast;
 	this.once = namespace.once;
-	this.onceFast = function(event, handler) {
-		namespace.listeners.push({
-			type: event,
-			handler: handler,
-			once: true
-		});
-		return namespace;
-	}
+	this.onceFast = namespace.onceFast;
 	this.wait = namespace.wait;
-	this.emit = function() {
-		if (this.connected.length) _.each(this.connected, e => e.emit.apply(e, arguments));
-		return namespace.emit.apply(this, arguments);
-	};
+	this.emit = namespace.emit;
+	this.emitFast = namespace.emitFast;
 	this.use = namespace.use;
 	this.listener = namespace.getListeners;
-	this.pipe = function(emitter) {
-		this.connected.push(emitter);
+	this.pipe = namespace.pipe;
+
+	if (fast) {
+		delete this.on;
+		delete this.use;
+		delete this.once;
+		delete this.emit;
+		delete this.pipe;
+		this.on = this.onFast;
+		this.once = this.onceFast;
+		this.emit = this.emitFast;
 	}
 
 	return this;
