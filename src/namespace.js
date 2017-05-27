@@ -4,12 +4,14 @@ const _ = require("lodash");
 
 const o = overload.o;
 
-module.exports = function() {
+module.exports = function(id) {
 	const namespace = this;
 
 	this.listeners = [];
 	this.middlewares = [];
 	this.connected = [];
+
+	this._id = id || Math.random();
 
 	this._on = function(type, ttl, once, handler) {
 		var _resolve;

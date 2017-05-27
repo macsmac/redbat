@@ -12,6 +12,18 @@ describe("Init", function() {
 
 		next();
 	});
+
+	it("EventEmitter should have some id", function(next) {
+		assert.ok(emitter._id);
+
+		next();
+	});
+
+	it("EventEmitter should have same id with default namespace", function(next) {
+		assert.equal(emitter.namespace()._id, emitter._id);
+
+		next();
+	});
 });
 
 describe("Namespaces", function() {
