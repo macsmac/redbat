@@ -115,11 +115,6 @@ describe("Listeners", function() {
 	});
 
 	it("Should pipe events from namespace 'foo' to 'bar'", function(next) {
-		emitter.namespace("bar")
-			.on("test", function() {
-				next();
-			});
-
 		emitter.namespace("foo")
 			.pipe(
 				emitter.namespace("bar")
