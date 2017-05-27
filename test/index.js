@@ -10,7 +10,7 @@ describe("Init", function() {
 
 		assert.ok(emitter);
 
-		next(); 
+		next();
 	});
 });
 
@@ -109,11 +109,13 @@ describe("Listeners", function() {
 			});
 
 		emitter.namespace("foo")
-			.on("test", function() {
-				assert.ok(false);
-			})
-			.pipe(emitter.namespace("bar"))
-			.emit("test");
+			.pipe(
+				emitter.namespace("bar")
+					.on("test", function() {
+						next();
+					})
+			)
+			.emit("test")
 	});
 });
 
