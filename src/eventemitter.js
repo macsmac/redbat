@@ -2,18 +2,20 @@ const Namespace = require("./namespace");
 const _ = require("lodash");
 
 module.exports = function(fast) {
+	const emitter = this;
+
 	this._id = Math.random();
 
 	this.DEFAULT_NAMESPACE = "default";
 	this.namespaces = {};
 
-	this.namespaces[this.DEFAULT_NAMESPACE] = new Namespace(this._id);
+	this.namespaces[this.DEFAULT_NAMESPACE] = new Namespace(this._id, emitter);
 
 	this.namespace = function(name) {
 		if (!name) return this.namespaces[this.DEFAULT_NAMESPACE];
 
 		if (!this.namespaces[name]) {
-			return this.namespaces[name] = new Namespace();
+			return this.namespaces[name] = new Namespace(null, emitter);
 		} else {
 			return this.namespaces[name];
 		}

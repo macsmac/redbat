@@ -4,7 +4,7 @@ const _ = require("lodash");
 
 const o = overload.o;
 
-module.exports = function(id) {
+module.exports = Namespace = function(id, emitter) {
 	const namespace = this;
 
 	this.listeners = [];
@@ -60,11 +60,13 @@ module.exports = function(id) {
 	}
 
 	this.pipe = function() {
-		[].push.apply(namespace.connected, arguments);
+		[].push.apply(namespace.connected, namespace.namespacifyAll(arguments));
 		return namespace;
 	}
 
 	this.unpipe = function(target) {
+		target = namespace.namespacify(target);
+
 		_.each(namespace.connected, function(e, i) {
 			if (e._id === target._id) {
 				namespace.connected.splice(i, 1);
@@ -186,6 +188,18 @@ module.exports = function(id) {
 			if (handler.length === 2) next();
 		}, callback);
 	}
+
+	this.namespacifyAll = function(data) {
+		return _.map(data, namespace.namespacify);
+	}
+	this.namespacify = function(query) {
+		if (query instanceof Namespace) {
+			return query;
+		} else {
+			return emitter.namespace(query);
+		}
+	}
+	this.namespace = namespace.namespacify;
 
 	return this;
 }
