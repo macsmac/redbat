@@ -16,7 +16,7 @@ module.exports = function() {
 		var noHandler = !handler;
 
 		if (noHandler) {
-			handler = function() { 
+			handler = function() {
 				_resolve(_.slice(arguments));
 			}
 		}
@@ -97,7 +97,7 @@ module.exports = function() {
 		_.each(namespace.listeners, function(listener) {
 			if (typeof listener.type === "string" ? listener.type === type : _.indexOf(listener.type, type) !== -1) {
 				listener.handler.apply(namespace, data);
-			} 
+			}
 		});
 	}
 
@@ -155,7 +155,7 @@ module.exports = function() {
 				}
 			});
 		} else {
-			if (!data.length || data.length === 1) { // just for optimization, want to beat eventemitter2 lol
+			if (data.length < 2) { // just for optimization, want to beat eventemitter2 lol
 				return listeners[0].handler(data[0]);
 			}
 
