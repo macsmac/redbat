@@ -124,6 +124,19 @@ describe("Listeners", function() {
 			)
 			.emit("test")
 	});
+
+	it("Should unpipe events from namespace '1' to '2'", function(next) {
+		emitter.namespace("2")
+			.on("test", function() {
+				next();
+			});
+
+		emitter.namespace("1")
+			.pipe(emitter.namespace("2"))
+			.emit("test")
+			.unpipe(emitter.namespace("2"))
+			.emit("test");
+	});
 });
 
 describe("Middlewares", function() {

@@ -64,6 +64,14 @@ module.exports = function(id) {
 		return namespace;
 	}
 
+	this.unpipe = function(target) {
+		_.each(namespace.connected, function(e, i) {
+			if (e._id === target._id) {
+				namespace.connected.splice(i, 1);
+			}
+		});
+	}
+
 	this.onFast = function(event, handler) {
 		namespace.listeners.push({
 			type: event,

@@ -31,6 +31,7 @@ module.exports = function(fast) {
 	this.use = namespace.use;
 	this.listener = namespace.getListeners;
 	this.pipe = namespace.pipe;
+	this.unpipe = namespace.unpipe;
 
 	if (fast) {
 		delete this.on;
