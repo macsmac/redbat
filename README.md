@@ -2,148 +2,234 @@
 
 [![Build Status](https://travis-ci.org/RedFoxCode/redbat.svg?branch=master)](https://travis-ci.org/RedFoxCode/redbat)
 
-**redbat** is an implementation of Node.JS [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter) class with some extra-features.
-
-> **Note:** This library is pretty raw, I'm planning to improve and add a lot of things
+**redbat** is a re-implementation of EventEmitter Node.JS with extra-features (middlewares, ttl and other).
 
 # Features
 
 * Fluent API
-* Namespaces
+* Midвlewares
 * TTL for listeners
-* Middlewares
-* One handler for multiple listeners
-
-# Installation
-
-```sh
-npm i redbat
-```
-
-# Skip this if you don't need this .-.
-
-### Building
-
-Really, skip this if you are just installing it from npm. But if you need to build it:
-
-```sh
-cd ./redbat
-npm run build
-# outputs build to ./build/index
-```
-
-# Getting started
-
-First require redbat in your code:
-
-```javascript
-const redbat = require("redbat");
-```
-
-To create a new EventEmitter call **EventEmitter** constructor:
-
-```javascript
-const myEmitter = new redbat.EventEmitter();
-```
-
-To create listener use **on** method of **EventEmitter**:
-
-```javascript
-myEmitter.on("my event", function(data) {
-    console.log(data);
-});
-```
-
-> **Note:** if you have more than one listener for one event it will add callback to arguments. It should be called when current handler finished it's work. Don't care about it if you have only one listener.
-
-To call event handler use **emit** method:
-
-```javascript
-/*
-Should log "hello" in console
-*/
-myEmitter.emit("my event", "hello");
-```
-
-.-. Getting started is finished here. Here comes reference.
+* Namespaces
+* Namespace event piping
 
 # Reference
 
-### constructor: EventEmitter
+### Namespaces
 
-Arguments:
+Namespaces store events/middlewares where events are emitted/processed/manipulated. Namespaces are like separate rooms in the flat - if you will say `hello` in one room, it will not be said in another room.
 
-**no arguments**
-
-Properties:
-
-* **on(type[, ttl], handler)** - Add listener in default namespace
-* **once(type[, ttl], handler)** - Add listener in default namespace that calls only once
-* **emit(type, handler)** - Emit event in default namespace
-* **use(handler)** - Add middleware in default namespace
-* **listener(query)** - Get array of listeners
-* **namespace(query)** - Get namespace. If null returns default. If doesn't exists creates and returns it
-
-### constructor: Namespace
-
-> Unavaliable from outside .-. but some of **EventEmitter** methods returns **Namespace**
-
-Arguments:
-
-**no arguments**
-
-Properties:
-
-* **getListeners(query)** - Get array of listeners
-* **listeners** - Array of all listeners
-* **middlewares** - Array of all middlewares
-* **on(type[, ttl], handler)** - Add listener
-* **once(type[, ttl], handler)** - Add listener that calls only once
-* **emit(type, handler)** - Emit event
-* **use(handler)** - Add middleware
-
-> All of methods returns namespace they was called in, so you can chain them:
+When creating EventEmitter instance and executing this code...
 
 ```javascript
-myEmitter.namespace("my namespace")
-    .on("my event 1", function() { /* ... */ })
-    .on("my event 2", function() { /* ... */ })
-    .emit("my event 1");
+const emitter = new redbat.EventEmitter();
+
+emitter
+    .on("test", function() {})
+    .emit("test");
 ```
 
-### Middlewares and events chaining
-
-Middlewares (added by **use** method) are called before processing every event of namespace. Middleware is called with two arguments: Array of arguments (provided in **emit**) and callback (must be called when middleware finished work). You can have as many middlewares as you want (until memory runs out). Example:
+...it will emit and process event `test` in namespace called `default`. If you wish you can change it's name to whatever you like by providing options argument to EventEmitter constructor as first argument:
 
 ```javascript
-myEmitter
-    .use(function(args, next) {
-        console.log("First middleware called");
-        next();
-    })
-    .use(function(args, next) {
-        console.log("Second middleware called");
-        next();
-    });
+const emitter = new redbat.EventEmitter({
+    defaultNamespace: "df"
+});
 ```
 
-> **TODO:** Probably need to add type argument
-
-> **TODO2:** Do not wait for callback to be called if middleware return non-undefined value
-
-If you have more than one listener for one event you should call callback that will be last argument of event handler. You can chain events like this. Example:
+Now if we will call `on` method it will be emitted in `df` namespace. To emit event to another namespace you need to use `namespace` method:
 
 ```javascript
-myEmitter
-    .on("event", function(next) {
-        console.log("First event handler called");
+emitter.namespace(); // will return default namespace
+emitter.namespace("my namespace"); // will create and return new namespace called 'my namespace'
+emitter.namespace("my namespace"); // will return already existing namespace
+```
+
+To emit event in namespace you do pretty much the same:
+
+```javascript
+emitter
+    .namespace("my namespace")
+    .on("test", function() {}) // will be executed
+    .emit("test");
+
+emitter.emit("test"); // will not be executed (emitted in default namespace)
+```
+
+# Listeners
+
+**on**
+
+To create new listener you should call `on` method of Namespace. It accepts next arguments:
+
+1. **type** (required), array or string
+2. **ttl** (optional), number
+3. **handler** (required), function
+
+Type is event name on which listeners should be called. It can be string: `"my event"`, it will be triggered by event `my event`. And it can be array of strings: `["my event", "my event 2"]`, it will be triggered by event `my event` and `my event 2`.
+
+TTL is abbreviation from `time to live`. It's a number representing time in milliseconds after which listener will be destroyed.
+
+Handler is function that will be called when event will be fired.
+
+To destroy listener use `delete` method.
+
+```javascript
+emitter.delete("1337");
+```
+
+**emit**
+
+To emit event you should call `emit` method of Namespace. It accepts type as first argument. Other arguments will be given in event handler.
+
+```javascript
+emitter
+    .on("test", function(a, b, c) {
+        console.log(a, b, c); // logs '1 2 3'
+    })
+    .emit("test", 1, 2, 3);
+```
+
+**chaining events**
+
+If you have more then one listener for one event you shoud call function provided as last argument given in event handler. By calling it you assume that event handler has finished it's work.
+
+```javascript
+emitter
+    .on("test", function(next) {
         next();
     })
-    .on("event", function(next) {
-        console.log("Second event handler called");
+    .on("test", function(next) {
         next();
     })
-    .emit("event");
+    .emit("test");
+```
+
+**once and wait**
+
+If you need to process handler only once and then destroy listener use `once` method. It accepts same arguments as `on` and you can chain them.
+
+Wait is the same as `once`, the only difference is that `wait` method returns instance of Promise.
+
+```javascript
+emitter.wait("test").then(console.log);
+```
+
+So you can use it with await (ES6)
+
+```javascript
+async function waitPlease() {
+    return console.log(await emitter.wait("test"));
+}
+
+waitPlease();
+```
+
+**event piping**
+
+You can pipe (redirect) events from one namespace to another by calling `pipe` method of Namespace. It accepts Namespace as first argument or it's name.
+
+```javascript
+emitter.namespace("1").pipe("2");
+
+emitter.namespace("1")
+    .on("test", console.log); // will be called
+
+emitter.namespace("2")
+    .on("test", console.log); // also will be called
+
+emitter.namespace("1").emit("test", "Hello");
+
+// but...
+
+emitter.namespace("2").emit("test", "Hello"); // handler in namespace '1' will not be called
+```
+
+> **Note:** DO NOT try the following code. It will fall in recursion
+
+```javascript
+emitter.namespace("1").pipe("2");
+emitter.namespace("2").pipe("1");
+```
+
+To unpipe namespace use `unpipe` method
+
+```javscript
+emitter
+    .namespace("1")
+    .unpipe("2");
+```
+
+**middlewares**
+
+Middlewares are functions that are called before processing any event of namespace (doesn't matter does event handler exist or not). You can have as many middlewares as you want (until memory runs out). Middleware handler takes three arguments:
+
+1. **type** string - you got it lol
+2. **args** array - array of arguments given in emit
+3. **next** function - must be called when middleware finished it's work
+
+To add a middleware use `use` method of Namespace
+
+```javascript
+emitter.use(function(type, args, next) {
+    console.log("I'm a middleware");
+    next();
+});
+```
+
+Example of three middlewares:
+
+```javascript
+emitter
+    .use(function(type, args, next) {
+        console.log(1);
+        next();
+    })
+    .use(function(type, args, next) {
+        console.log(2);
+        next();
+    })
+    .emit("some event");
+```
+
+You may not call `next` if middleware handler takes only 2 arguments. `next` will be called by it self
+
+```javascript
+// will also work
+emitter
+    .use(function(type, args) {
+        console.log(1);
+    })
+    .use(function(type, args) {
+        console.log(2);
+    })
+    .emit("some event");
+```
+
+**onFast, onceFast, emitFast**
+
+If you don't need features like TTL or middlewares, but performance use `onFast`, `onceFast` and `emitFast` to create and call listeners. `onFast` takes same arguments, but without TTL. `onceFast` takes same arguments as `onFast`. `emitFast` takes same arguments as `emit`. Using this method this will disable features like middlewares.
+
+> **Note:** I don't actually know why you will need this, because you can use regular EventEmitter
+
+# Other
+
+For building and testing first install dependencies
+
+```sh
+cd redbat
+npm install
+```
+
+**testing**
+
+```sh
+npm run test
+```
+
+**building**
+
+```sh
+npm run build
 ```
 
 # LICENSE
