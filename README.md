@@ -55,7 +55,7 @@ emitter
 emitter.emit("test"); // will not be executed (emitted in default namespace)
 ```
 
-# Listeners
+### Listeners
 
 **on**
 
