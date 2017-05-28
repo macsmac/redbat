@@ -1,18 +1,23 @@
 const Namespace = require("./namespace");
 const _ = require("lodash");
 
-module.exports = function(fast) {
+module.exports = function(options) {
 	const emitter = this;
 
-	this._id = Math.random();
+	options = _.defaults(options, {
+		fast: false,
+		defaultNamespace: "default",
+		id: Math.random()
+	});
 
-	this.DEFAULT_NAMESPACE = "default";
+	this._id = options.id;
+
 	this.namespaces = {};
 
-	this.namespaces[this.DEFAULT_NAMESPACE] = new Namespace(this._id, emitter);
+	this.namespaces[options.defaultNamespace] = new Namespace(this._id, emitter);
 
 	this.namespace = function(name) {
-		if (!name) return this.namespaces[this.DEFAULT_NAMESPACE];
+		if (!name) return this.namespaces[options.defaultNamespace];
 
 		if (!this.namespaces[name]) {
 			return this.namespaces[name] = new Namespace(null, emitter);
@@ -35,7 +40,7 @@ module.exports = function(fast) {
 	this.pipe = namespace.pipe;
 	this.unpipe = namespace.unpipe;
 
-	if (fast) {
+	if (options.fast) {
 		delete this.on;
 		delete this.use;
 		delete this.once;
