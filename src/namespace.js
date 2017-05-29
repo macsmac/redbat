@@ -4,7 +4,7 @@ const _ = require("lodash");
 
 const o = overload.o;
 
-module.exports = Namespace = function(id, emitter) {
+const Namespace = function(id, emitter) {
 	const namespace = this;
 
 	this.listeners = [];
@@ -203,3 +203,5 @@ module.exports = Namespace = function(id, emitter) {
 
 	return this;
 }
+
+module.exports = Namespace;

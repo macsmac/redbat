@@ -1,6 +1,5 @@
 const BABEL_CONF = {
-	"presets": ["es2015", "stage-0"],
-	"plugins": ["transform-runtime"]
+	"presets": ["es2015", "stage-3"]
 }
 
 const gulp = require("gulp");
