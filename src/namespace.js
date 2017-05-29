@@ -174,19 +174,30 @@ const Namespace = function(id, emitter) {
 			listeners[0].handler.apply(listeners[0], data);
 		}
 	}
-	this.executeMiddlewares = function(type, data, callback) {
-		if (!namespace.middlewares.length) return callback();
+	this.executeChain = function(chain, getArgs, handlerExecuted, callback) {
+		if (!chain.length) return callback();
 
-		async.eachSeries(namespace.middlewares, function(handler, callback) {
+		async.eachSeries(chain, function(handler, callback) {
 			const next = function(error) {
 				callback(error || null);
 			}
-			const args = [type, data, handler.length > 2 ? next : undefined];
 
-			handler.apply(namespace, args);
+			const result = handler.apply(namespace, getArgs(handler, next));
 
-			if (handler.length === 2) next();
+			handlerExecuted(handler, result, next);
 		}, callback);
+	}
+	this.executeMiddlewares = function(type, data, callback) {
+		namespace.executeChain(
+			namespace.middlewares,
+			(handler, next) => [type, data, handler.length > 2 ? next : undefined],
+			function(handler, result, next) {
+				if (handler.length < 3) {
+					next(result);
+				}
+			},
+			callback
+		);
 	}
 
 	this.namespacifyAll = function(data) {
