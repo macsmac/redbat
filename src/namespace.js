@@ -242,7 +242,7 @@ const Namespace = function(id, emitter) {
 			return emitter.namespace(query);
 		}
 	}
-	this.namespace = namespace.namespacify;
+	this.namespace = emitter.namespace;
 
 	return this;
 }

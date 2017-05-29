@@ -17,12 +17,12 @@ module.exports = function(options) {
 	this.namespaces[options.defaultNamespace] = new Namespace(this._id, emitter);
 
 	this.namespace = function(name) {
-		if (!name) return this.namespaces[options.defaultNamespace];
+		if (!name) return emitter.namespaces[options.defaultNamespace];
 
-		if (!this.namespaces[name]) {
-			return this.namespaces[name] = new Namespace(null, emitter);
+		if (!emitter.namespaces[name]) {
+			return emitter.namespaces[name] = new Namespace(null, emitter);
 		} else {
-			return this.namespaces[name];
+			return emitter.namespaces[name];
 		}
 	}
 
