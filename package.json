@@ -1,6 +1,6 @@
 {
   "name": "redbat",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "EventEmitter implementation",
   "main": "./build/index",
   "dependencies": {
