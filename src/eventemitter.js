@@ -36,6 +36,7 @@ module.exports = function(options) {
 	this.emit = namespace.emit;
 	this.emitFast = namespace.emitFast;
 	this.use = namespace.use;
+	this.catch = namespace.catch;
 	this.listener = namespace.getListeners;
 	this.pipe = namespace.pipe;
 	this.unpipe = namespace.unpipe;

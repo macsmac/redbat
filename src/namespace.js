@@ -9,6 +9,7 @@ const Namespace = function(id, emitter) {
 
 	this.listeners = [];
 	this.middlewares = [];
+	this.catches = [];
 	this.connected = [];
 
 	this._id = id || Math.random();
@@ -96,8 +97,11 @@ const Namespace = function(id, emitter) {
 
 		_.each(namespace.connected, e => e && e.emit.apply(e.namespace ? e.namespace() : e, args));
 
-		namespace.executeMiddlewares(type, data, function() {
-			namespace.executeListeners(type, data);
+		namespace.executeMiddlewares(type, data, function(error) {
+			if (namespace.triggerError(type, data, error)) return; // probably should refactor this
+			namespace.executeListeners(type, data, function(error) {
+				namespace.triggerError(type, data, error);
+			});
 		});
 
 		return namespace;
@@ -117,6 +121,11 @@ const Namespace = function(id, emitter) {
 	 	namespace.middlewares.push(handler);
 
 	 	return namespace;
+	}
+	this.catch = function(handler) {
+		namespace.catches.push(handler);
+
+		return namespace;
 	}
 
 	this.getListeners = function(query, del) {
@@ -148,7 +157,7 @@ const Namespace = function(id, emitter) {
 		});
 	}
 
-	this.executeListeners = function(type, data) {
+	this.executeListeners = function(type, data, callback) {
 		const listeners = namespace.getListeners(type);
 		const shouldCallWithNext = listeners.length > 1;
 
@@ -162,16 +171,14 @@ const Namespace = function(id, emitter) {
 					callback(error || null);
 				}));
 			}, function(error) {
-				if (error) {
-					throw error;
-				}
+				callback(error || null);
 			});
 		} else {
 			if (data.length < 2) { // just for optimization, want to beat eventemitter2 lol
 				return listeners[0].handler(data[0]);
 			}
 
-			listeners[0].handler.apply(listeners[0], data);
+			callback(listeners[0].handler.apply(listeners[0], data));
 		}
 	}
 	this.executeChain = function(chain, getArgs, handlerExecuted, callback) {
@@ -198,6 +205,23 @@ const Namespace = function(id, emitter) {
 			},
 			callback
 		);
+	}
+	this.triggerError = function(type, args, error) {
+		if (!error) return;
+		if (!namespace.catches.length) throw error;
+
+		namespace.executeChain(
+			namespace.catches,
+			(handler, next) => [type, args, error, next],
+			function(handler, result, next) {
+				if (handler.length < 4) {
+					next(result); // lol, this will fall in recursion if error handler will also end with error
+				}
+			},
+			function() {} // dummy function
+		);
+
+		return true;
 	}
 
 	this.namespacifyAll = function(data) {

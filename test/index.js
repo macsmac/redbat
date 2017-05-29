@@ -143,6 +143,7 @@ describe("Middlewares", function() {
 	beforeEach(function() {
 		emitter.namespace().middlewares = [];
 		emitter.namespace().listeners = [];
+		emitter.namespace().catches = [];
 	});
 
 	it("Should call sequence of 2 middlewares with type 'just an event'", function(next) {
@@ -176,5 +177,35 @@ describe("Middlewares", function() {
 			assert.equal(s.join(""), "12");
 			next();
 		}).emit("just an event");
+	});
+
+	it("Should process and handle middleware error", function(next) {
+		emitter
+			.use(function(type, args, next) {
+				next("test");
+			})
+			.catch(function(type, args, error, _next) {
+				assert.equal(type, "test");
+				assert.equal(error, "test");
+				assert.ok(_next);
+
+				_next();
+				next();
+			})
+			.emit("test", 1, 2);
+	});
+
+	it("Should throw middleware error", function(next) {
+		try {
+			emitter
+				.use(function(type, args, next) {
+					next("test");
+				})
+				.emit("test", 1, 2);
+		} catch(e) {
+			assert.equal(e, "test");
+
+			next();
+		}
 	});
 });
