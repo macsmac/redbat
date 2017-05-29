@@ -114,6 +114,16 @@ describe("Listeners", function() {
 		}).emit("ev1").emit("ev2", 1);
 	});
 
+	it("Listener should be triggered by ev(any symbol here) / regexp testing", function(next) {
+		emitter.on(/ev./, function() {
+			next();
+		})
+		.on("another", function() {
+			assert.ok(false);
+		})
+		.emit("ev9");
+	});
+
 	it("Should pipe events from namespace 'foo' to 'bar'", function(next) {
 		emitter.namespace("foo")
 			.pipe(

@@ -48,11 +48,11 @@ const Namespace = function(id, emitter) {
 		:: Can't find how to do it even in overloadjs doc
 	*/
 	this.on = overload()
-		.args(o.any(String, Array), Function).use((type, handler) => namespace._on(type, 0, false, handler))
-		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, false, handler));
+		.args(o.any(RegExp, String, Array), Function).use((type, handler) => namespace._on(type, 0, false, handler))
+		.args(o.any(RegExp, String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, false, handler));
 	this.once = overload()
-		.args(o.any(String, Array), Function).use((type, handler) => namespace._on(type, 0, true, handler))
-		.args(o.any(String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
+		.args(o.any(RegExp, String, Array), Function).use((type, handler) => namespace._on(type, 0, true, handler))
+		.args(o.any(RegExp, String, Array), Number, Function).use((type, ttl, handler) => namespace._on(type, ttl, true, handler));
 	this.wait = (type, ttl) => namespace._on(type, ttl, true, undefined);
 
 	this.delete = function(query) {
@@ -147,7 +147,15 @@ const Namespace = function(id, emitter) {
 				return false;
 			}
 
-			const ok = typeof e.type === "object" ? _.indexOf(e.type, query) !== -1 : e.type === query;
+			var ok;
+
+			if (e.type instanceof RegExp) {
+				ok = e.type.test(query);
+			} else if (Array.isArray(e.type)) {
+				ok = _.indexOf(e.type, query) !== -1;
+			} else {
+				ok = e.type === query;
+			}
 
 			if (ok && del) {
 				namespace.listeners.splice(i, 1);
