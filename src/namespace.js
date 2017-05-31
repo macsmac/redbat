@@ -97,11 +97,13 @@ const Namespace = function(id, emitter) {
 
 		_.each(namespace.connected, e => e && e.emit.apply(e.namespace ? e.namespace() : e, args));
 
-		namespace.executeMiddlewares(type, data, function(error) {
-			if (namespace.triggerError(type, data, error)) return; // probably should refactor this
-			namespace.executeListeners(type, data, function(error) {
-				namespace.triggerError(type, data, error);
-			});
+		async.eachSeries([
+			namespace.executeMiddlewares,
+			namespace.executeListeners
+		], function(handler, callback) {
+			handler(type, data, callback);
+		}, function(error) {
+			namespace.triggerError(type, data, error);
 		});
 
 		return namespace;
