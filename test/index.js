@@ -47,6 +47,30 @@ describe("Namespaces", function() {
 
 		next();
 	});
+
+	it("Should pipe events from namespace 'foo' to 'bar'", function(next) {
+		emitter.namespace("foo")
+			.pipe(
+				emitter.namespace("bar")
+					.on("test", function() {
+						next();
+					})
+			)
+			.emit("test")
+	});
+
+	it("Should unpipe events from namespace '1' to '2'", function(next) {
+		emitter.namespace("2")
+			.on("test", function() {
+				next();
+			});
+
+		emitter.namespace("1")
+			.pipe(emitter.namespace("2"))
+			.emit("test")
+			.unpipe(emitter.namespace("2"))
+			.emit("test");
+	});
 });
 
 describe("Listeners", function() {
@@ -122,30 +146,6 @@ describe("Listeners", function() {
 			assert.ok(false);
 		})
 		.emit("ev9");
-	});
-
-	it("Should pipe events from namespace 'foo' to 'bar'", function(next) {
-		emitter.namespace("foo")
-			.pipe(
-				emitter.namespace("bar")
-					.on("test", function() {
-						next();
-					})
-			)
-			.emit("test")
-	});
-
-	it("Should unpipe events from namespace '1' to '2'", function(next) {
-		emitter.namespace("2")
-			.on("test", function() {
-				next();
-			});
-
-		emitter.namespace("1")
-			.pipe(emitter.namespace("2"))
-			.emit("test")
-			.unpipe(emitter.namespace("2"))
-			.emit("test");
 	});
 });
 
