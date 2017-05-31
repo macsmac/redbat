@@ -11,6 +11,7 @@ const Namespace = function(id, emitter) {
 	this.middlewares = [];
 	this.catches = [];
 	this.connected = [];
+	this.freezed = false;
 
 	this._id = id || Math.random();
 
@@ -19,6 +20,22 @@ const Namespace = function(id, emitter) {
 		this.middlewares = [];
 		this.catches = [];
 		this.connected = [];
+	}
+
+
+	this.freeze = function(event, set = true) {
+		if (!event) {
+			namespace.freezed = set;
+		} else {
+			namespace.getListeners(event, false, function(e) {
+				e.freezed = set;
+			});
+		}
+
+		return namespace;
+	}
+	this.unfreeze = function(event) {
+		return namespace.freeze(event, false);
 	}
 
 	this._on = function(type, ttl, once, handler) {
@@ -99,6 +116,8 @@ const Namespace = function(id, emitter) {
 	}
 
 	this.emit = function(type) {
+		if (namespace.freezed) return namespace;
+
 		const args = _.slice(arguments);
 		const data = _.slice(args, 1);
 
@@ -137,7 +156,7 @@ const Namespace = function(id, emitter) {
 		return namespace;
 	}
 
-	this.getListeners = function(query, del) {
+	this.getListeners = function(query, del, each) {
 		return _.filter(namespace.listeners, function(e, i) {
 			if (!e) {
 				return false;
@@ -168,9 +187,11 @@ const Namespace = function(id, emitter) {
 
 			if (ok && del) {
 				namespace.listeners.splice(i, 1);
+			} else if (ok && each) {
+				each(e);
 			}
 
-			return ok;
+			return !e.freezed && ok;
 		});
 	}
 

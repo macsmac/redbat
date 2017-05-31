@@ -92,6 +92,22 @@ describe("Namespaces", function() {
 		assert.equal(Object.keys(emitter2.namespaces).length, 7);
 		assert.equal(emitter2.namespace("e").listeners.length, 0);
 	});
+
+	it("Should freeze and unfreeze namespace 'bled'", function(next) {
+		emitter.namespace("bled").on("test", function() {
+			assert.ok(false);
+		}).freeze().emit("test").unfreeze().on("testo", function() {
+			next();
+		}).emit("testo");
+	});
+
+	it("Should freeze event '999'", function(next) {
+		emitter.on("999", function() {
+			assert.ok(false);
+		}).on("888", function() {
+			next();
+		}).freeze("999").emit("999").emit("888");
+	});
 });
 
 describe("Listeners", function() {

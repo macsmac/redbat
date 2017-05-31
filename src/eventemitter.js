@@ -40,6 +40,7 @@ module.exports = function(options) {
 	this.listener = namespace.getListeners;
 	this.pipe = namespace.pipe;
 	this.unpipe = namespace.unpipe;
+	this.freeze = namespace.freeze;
 
 	this.reset = function(what = "all") {
 		if (what === "all") {
