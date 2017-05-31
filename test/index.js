@@ -71,6 +71,27 @@ describe("Namespaces", function() {
 			.unpipe(emitter.namespace("2"))
 			.emit("test");
 	});
+
+	it("Should remove namespaces in EventEmitter", function() {
+		const emitter2 = new redbat.EventEmitter();
+
+		["a", "z", "e", "r", "t", "y"].map(emitter2.namespace);
+
+		emitter2.reset("all");
+
+		assert.equal(Object.keys(emitter2.namespaces).length, 1);
+	});
+
+	it("Should reset all namespaces in EventEmitter", function() {
+		const emitter2 = new redbat.EventEmitter();
+
+		["a", "z", "e", "r", "t", "y"].map(n => emitter2.namespace(n).wait("test"));
+
+		emitter2.reset("namespaces");
+
+		assert.equal(Object.keys(emitter2.namespaces).length, 7);
+		assert.equal(emitter2.namespace("e").listeners.length, 0);
+	});
 });
 
 describe("Listeners", function() {

@@ -14,6 +14,13 @@ const Namespace = function(id, emitter) {
 
 	this._id = id || Math.random();
 
+	this.reset = function() {
+		this.listeners = [];
+		this.middlewares = [];
+		this.catches = [];
+		this.connected = [];
+	}
+
 	this._on = function(type, ttl, once, handler) {
 		var _resolve;
 		var noHandler = !handler;

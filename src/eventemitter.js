@@ -41,6 +41,17 @@ module.exports = function(options) {
 	this.pipe = namespace.pipe;
 	this.unpipe = namespace.unpipe;
 
+	this.reset = function(what = "all") {
+		if (what === "all") {
+			emitter.namespaces = {};
+			emitter.namespaces[options.defaultNamespace] = new Namespace(emitter._id, emitter);
+		} else if (what === "namespaces") {
+			_.each(_.keys(emitter.namespaces), key => emitter.namespaces[key].reset());
+		} else {
+			throw new Error("Cannot reset '" + what +"'");
+		}
+	}
+
 	if (options.fast) {
 		delete this.on;
 		delete this.use;
