@@ -4,7 +4,7 @@ const _ = require("lodash");
 
 const o = overload.o;
 
-const Namespace = function(id, emitter) {
+const Namespace = function(options, emitter) {
 	const namespace = this;
 
 	this.listeners = [];
@@ -13,7 +13,7 @@ const Namespace = function(id, emitter) {
 	this.connected = [];
 	this.freezed = false;
 
-	this._id = id || Math.random();
+	this._id = options.id;
 
 	this.reset = function() {
 		this.listeners = [];

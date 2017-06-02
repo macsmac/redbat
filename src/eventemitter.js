@@ -14,13 +14,17 @@ module.exports = function(options) {
 
 	this.namespaces = {};
 
-	this.namespaces[options.defaultNamespace] = new Namespace(this._id, emitter);
+	this.namespaces[options.defaultNamespace] = new Namespace({
+		id: emitter._id
+	}, emitter);
 
-	this.namespace = function(name) {
+	this.namespace = function(name, namespaceOptions) {
 		if (!name) return emitter.namespaces[options.defaultNamespace];
 
 		if (!emitter.namespaces[name]) {
-			return emitter.namespaces[name] = new Namespace(null, emitter);
+			return emitter.namespaces[name] = new Namespace(_.defaults(namespaceOptions, {
+				id: Math.random()
+			}), emitter);
 		} else {
 			return emitter.namespaces[name];
 		}
