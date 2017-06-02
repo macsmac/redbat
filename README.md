@@ -153,7 +153,7 @@ emitter.namespace("2").pipe("1");
 
 To unpipe namespace use `unpipe` method
 
-```javscript
+```javascript
 emitter
     .namespace("1")
     .unpipe("2");
@@ -176,7 +176,7 @@ emitter.use(function(type, args, next) {
 });
 ```
 
-Example of three middlewares:
+Example of two middlewares:
 
 ```javascript
 emitter
