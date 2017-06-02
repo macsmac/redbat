@@ -7,6 +7,7 @@ module.exports = function(options) {
 	options = _.defaults(options, {
 		fast: false,
 		defaultNamespace: "default",
+		stats: false,
 		id: Math.random()
 	});
 
@@ -23,7 +24,8 @@ module.exports = function(options) {
 
 		if (!emitter.namespaces[name]) {
 			return emitter.namespaces[name] = new Namespace(_.defaults(namespaceOptions, {
-				id: Math.random()
+				id: Math.random(),
+				stats: options.stats
 			}), emitter);
 		} else {
 			return emitter.namespaces[name];
@@ -45,6 +47,7 @@ module.exports = function(options) {
 	this.pipe = namespace.pipe;
 	this.unpipe = namespace.unpipe;
 	this.freeze = namespace.freeze;
+	this.stats = namespace.stats;
 
 	this.reset = function(what = "all") {
 		if (what === "all") {

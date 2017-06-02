@@ -11,6 +11,7 @@ const Namespace = function(options, emitter) {
 	this.middlewares = [];
 	this.catches = [];
 	this.connected = [];
+	this.listenerStats = {};
 	this.freezed = false;
 
 	this._id = options.id;
@@ -118,6 +119,10 @@ const Namespace = function(options, emitter) {
 	this.emit = function(type) {
 		if (namespace.freezed) return namespace;
 
+		if (options.stats) {
+			namespace.listenerStats[type] = ~~namespace.listenerStats[type] + 1;
+		}
+
 		const args = _.slice(arguments);
 		const data = _.slice(args, 1);
 
@@ -143,6 +148,10 @@ const Namespace = function(options, emitter) {
 				listener.handler.apply(namespace, data);
 			}
 		});
+	}
+
+	this.stats = function() {
+		return namespace.listenerStats;
 	}
 
 	this.use = function(handler) {

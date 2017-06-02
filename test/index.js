@@ -108,6 +108,22 @@ describe("Namespaces", function() {
 			next();
 		}).freeze("999").emit("999").emit("888");
 	});
+
+	it("Should collect stats in namespace '666'", function() {
+		emitter.namespace("666", {
+			stats: true
+		}).emit("test");
+
+		console.log(emitter.namespace("666").stats());
+
+		assert.equal(emitter.namespace("666").stats().test, 1);
+	});
+
+	it("Should NOT collect stats in namespace '299'", function() {
+		emitter.namespace("299").emit("test");
+
+		assert.equal(emitter.namespace("299").stats().test, undefined);
+	});
 });
 
 describe("Listeners", function() {
