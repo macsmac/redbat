@@ -48,7 +48,7 @@ const Namespace = function(options = {}, emitter = {}) {
 			const type = decodeURIComponent(data[0]);
 			const args = data[1].split(",").map(decodeURIComponent);
 
-			namespace.emit.apply(namespace, [type, ...args]);
+			namespace._emit(type, args, false, true);
 
 			callback();
 		}
@@ -61,7 +61,7 @@ const Namespace = function(options = {}, emitter = {}) {
 		output._read = function() {
 			namespace.useOnce(function(type, args) {
 				output.push(encodeURIComponent(type) + ";" + args.map(decodeURIComponent).join(","));
-			});
+			}, true);
 		}
 
 		return output;
@@ -144,28 +144,29 @@ const Namespace = function(options = {}, emitter = {}) {
 		return namespace;
 	}
 
-	this.emit = function(type) {
+	this._emit = function(type, args, skipPiped, skipMiddlewares) {
 		if (namespace.freezed) return namespace;
 
 		if (options.stats) {
 			namespace.listenerStats[type] = ~~namespace.listenerStats[type] + 1;
 		}
 
-		const args = _.slice(arguments);
-		const data = _.slice(args, 1);
-
-		_.each(namespace.connected, e => e && e.emit.apply(e.namespace ? e.namespace() : e, args));
+		if (!skipPiped) _.each(namespace.connected, e => e && e._emit(type, args, true));
 
 		async.eachSeries([
-			namespace.executeMiddlewares,
+			namespace.executeMiddlewares.bind(namespace, skipMiddlewares),
 			namespace.executeListeners
 		], function(handler, callback) {
-			handler(type, data, callback);
+			handler(type, args, callback);
 		}, function(error) {
-			namespace.triggerError(type, data, error);
+			namespace.triggerError(type, args, error);
 		});
 
 		return namespace;
+	}
+
+	this.emit = function(type) {
+		return namespace._emit(type, _.slice(arguments, 1));
 	}
 
 	this.emitFast = function(type) {
@@ -182,16 +183,17 @@ const Namespace = function(options = {}, emitter = {}) {
 		return namespace.listenerStats;
 	}
 
-	this.use = function(handler, once) {
+	this.use = function(handler, once, skip) {
 	 	namespace.middlewares.push({
 			handler: handler,
-			once: once
+			once: once,
+			skip: skip
 		});
 
 	 	return namespace;
 	}
-	this.useOnce = function(handler) {
-		return namespace.use(handler, true);
+	this.useOnce = function(handler, skip) {
+		return namespace.use(handler, true, skip);
 	}
 	this.catch = function(handler) {
 		namespace.catches.push(handler);
@@ -262,13 +264,15 @@ const Namespace = function(options = {}, emitter = {}) {
 			callback(listeners[0].handler.apply(listeners[0], data));
 		}
 	}
-	this.executeChain = function(chain, getArgs, handlerExecuted, callback) {
+	this.executeChain = function(skipMarked, chain, getArgs, handlerExecuted, callback) {
 		if (!chain.length) return callback();
 
 		var i = 0;
 		var once;
 
 		async.eachSeries(chain, function(handler, callback) {
+			if (handler.skip && skipMarked) return callback();
+
 			const next = function(error) {
 				callback(error || null);
 			}
@@ -289,8 +293,9 @@ const Namespace = function(options = {}, emitter = {}) {
 			i++;
 		}, callback);
 	}
-	this.executeMiddlewares = function(type, data, callback) {
+	this.executeMiddlewares = function(skip, type, data, callback) {
 		namespace.executeChain(
+			skip,
 			namespace.middlewares,
 			(handler, next) => [type, data, handler.length > 2 ? next : undefined],
 			function(handler, result, next) {
@@ -306,6 +311,7 @@ const Namespace = function(options = {}, emitter = {}) {
 		if (!namespace.catches.length) throw error;
 
 		namespace.executeChain(
+			false,
 			namespace.catches,
 			(handler, next) => [type, args, error, next],
 			function(handler, result, next) {
