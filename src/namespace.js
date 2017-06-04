@@ -1,5 +1,6 @@
 const overload = require("overload-js");
 const async = require("async");
+const stream = require("stream");
 const _ = require("lodash");
 
 const o = overload.o;
@@ -37,6 +38,33 @@ const Namespace = function(options, emitter) {
 	}
 	this.unfreeze = function(event) {
 		return namespace.freeze(event, false);
+	}
+
+	this.getInputStream = function() {
+		var input = new stream.Writable();
+
+		input._write = function(chunk, encoding, callback) {
+			const data = chunk.toString().split(";");
+			const type = decodeURIComponent(data[0]);
+			const args = data[1].split(",").map(decodeURIComponent);
+
+			namespace.emit.apply(namespace, [type, ...args]);
+
+			callback();
+		}
+
+		return input;
+	}
+	this.getOutputStream = function() {
+		var output = new stream.Readable();
+
+		output._read = function() {
+			namespace.useOnce(function(type, args) {
+				output.push(encodeURIComponent(type) + ";" + args.map(decodeURIComponent).join(","));
+			});
+		}
+
+		return output;
 	}
 
 	this._on = function(type, ttl, once, handler) {
@@ -154,10 +182,16 @@ const Namespace = function(options, emitter) {
 		return namespace.listenerStats;
 	}
 
-	this.use = function(handler) {
-	 	namespace.middlewares.push(handler);
+	this.use = function(handler, once) {
+	 	namespace.middlewares.push({
+			handler: handler,
+			once: once
+		});
 
 	 	return namespace;
+	}
+	this.useOnce = function(handler) {
+		return namespace.use(handler, true);
 	}
 	this.catch = function(handler) {
 		namespace.catches.push(handler);
@@ -231,14 +265,28 @@ const Namespace = function(options, emitter) {
 	this.executeChain = function(chain, getArgs, handlerExecuted, callback) {
 		if (!chain.length) return callback();
 
+		var i = 0;
+		var once;
+
 		async.eachSeries(chain, function(handler, callback) {
 			const next = function(error) {
 				callback(error || null);
 			}
 
+			if (typeof handler !== "function") {
+				once = handler.once;
+				handler = handler.handler; // lol
+			}
+
 			const result = handler.apply(namespace, getArgs(handler, next));
 
 			handlerExecuted(handler, result, next);
+
+			if (once) {
+				chain.splice(i, 1);
+			}
+
+			i++;
 		}, callback);
 	}
 	this.executeMiddlewares = function(type, data, callback) {
