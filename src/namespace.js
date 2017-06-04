@@ -5,7 +5,7 @@ const _ = require("lodash");
 
 const o = overload.o;
 
-const Namespace = function(options, emitter) {
+const Namespace = function(options = {}, emitter = {}) {
 	const namespace = this;
 
 	this.listeners = [];
