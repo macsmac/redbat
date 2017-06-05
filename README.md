@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/RedFoxCode/redbat.svg?branch=master)](https://travis-ci.org/RedFoxCode/redbat)
 
-**redbat** is a re-implementation of EventEmitter Node.JS with extra-features (middlewares, ttl and other).
+**redbat** is a re-implementation of regular EventEmitter with extra-features (middlewares, ttl and other).
 
 # Features
 
@@ -144,13 +144,6 @@ emitter.namespace("1").emit("test", "Hello");
 emitter.namespace("2").emit("test", "Hello"); // handler in namespace '1' will not be called
 ```
 
-> **Note:** DO NOT try the following code. It will fall in recursion
-
-```javascript
-emitter.namespace("1").pipe("2");
-emitter.namespace("2").pipe("1");
-```
-
 To unpipe namespace use `unpipe` method
 
 ```javascript
@@ -205,11 +198,131 @@ emitter
     .emit("some event");
 ```
 
+You can indicate that middleware finished with error. To do it call `next` with first argument as error
+
+```javascript
+emitter.use(function(type, args, next) {
+    next(new Error("Error testing"));
+});
+```
+
+This will just throw an error. To handle them you should add error handler with `catch` method.
+
+```javascript
+emitter.catch(function(type, args, error, next) {
+    // handle error somehow
+});
+```
+
 **onFast, onceFast, emitFast**
 
 If you don't need features like TTL or middlewares, but performance use `onFast`, `onceFast` and `emitFast` to create and call listeners. `onFast` takes same arguments, but without TTL. `onceFast` takes same arguments as `onFast`. `emitFast` takes same arguments as `emit`. Using this method this will disable features like middlewares.
 
 > **Note:** I don't actually know why you will need this, because you can use regular EventEmitter
+
+### Advanced usage
+
+**Listener with regexp** 
+
+`on` method can take RegExp as first argument.
+
+```javascript
+emitter.on(/^test/i, function() {}); // will be triggered two times
+emitter.emit("test1").emit("test2");
+```
+
+**Resetting namespaces**
+
+You can delete all namespaces of EventEmitter.
+
+```javascript
+emitter.reset("all");
+```
+
+Or just reset state of all EventEmitter namespaces (will not delete namespaces, but reset their listener, middlewares etc)
+
+```javascript
+emitter.reset("namespaces");
+```
+
+For namespaces, `reset` method takes no arguments.
+
+```javascript
+emitter.namespace().reset();
+```
+
+**Freezing events and namespaces**
+
+To freeze the whoole namespace call `freeze` method with no arguments
+
+```javascript
+emitter.on("test", function() {}).freeze().emit("test"); // will not trigger event
+```
+
+To unfreeze use `unfreeze` method.
+
+You can freeze event given in first argument of `freeze` method
+
+```javascript
+emitter
+    .on("foo", function() {}) // will not be triggered
+    .on("bar", function() {}) // will be triggered
+    .freeze("foo")
+    .emit("foo")
+    .emit("bar");
+```
+
+**Collecting namespace stats**
+
+You can collect stats of listeners of namespaces (see how much listener was called). Psss... second argument of `namespace` EventEmitter method takes namespace options.
+
+```javascript
+emitter.namespace("php", {
+    stats: true
+}).emit("shit").stats(); // => { "shit": 1 }
+```
+
+**Creating independent namespace**
+
+To create a namespace that is independent of its eventemitter use `Namespace` constructor.
+
+```javascript
+const independentNamespace = new redbat.Namespace();
+```
+
+Of course, you cannot call `namespace` method
+
+```javascript
+independentNamespace.namespace(); // throws an exception
+```
+
+All features (middlewares, ttl, event piping, etc) work as well.
+
+**getInputStream and getOutputStream**
+
+You can get a readable stream of events and writable stream to emit events in namespace.
+
+```javascript
+independentNamespace.getInputStream().write("test;hello");
+```
+
+This code will emit event called `test` and with arguments `["hello"]`. The structure of input stream chunks is: `<event name>;<arg1>,<arg2>...`. Every element should be url encoded.
+
+Output stream sends every event emitted in namespace
+
+```javascript
+independentNamespace.getOutputStream().pipe(process.stdout);
+independentNamespace.emit("test", "hello");
+/*
+this should write in console: test;hello
+*/
+```
+
+Or you can save event history to file
+
+```javascript
+independentNamespace.getOutputStream().pipe(fs.createWriteStream("eventhistory.log"));
+```
 
 # Other
 
