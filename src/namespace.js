@@ -335,7 +335,7 @@ const Namespace = function(options = {}, emitter = {}) {
 			return emitter.namespace(query);
 		}
 	}
-	this.namespace = emitter.namespace;
+	this.namespace = this.of = emitter.namespace;
 
 	return this;
 }

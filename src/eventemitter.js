@@ -19,7 +19,7 @@ module.exports = function(options) {
 		id: emitter._id
 	}, emitter);
 
-	this.namespace = function(name, namespaceOptions) {
+	this.namespace = this.of = function(name, namespaceOptions) {
 		if (!name) return emitter.namespaces[options.defaultNamespace];
 
 		if (!emitter.namespaces[name]) {

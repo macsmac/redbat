@@ -49,9 +49,9 @@ describe("Namespaces", function() {
 	});
 
 	it("Should pipe events from namespace 'foo' to 'bar'", function(next) {
-		emitter.namespace("foo")
+		emitter.of("foo")
 			.pipe(
-				emitter.namespace("bar")
+				emitter.of("bar")
 					.on("test", function() {
 						next();
 					})
@@ -60,15 +60,15 @@ describe("Namespaces", function() {
 	});
 
 	it("Should unpipe events from namespace '1' to '2'", function(next) {
-		emitter.namespace("2")
+		emitter.of("2")
 			.on("test", function() {
 				next();
 			});
 
-		emitter.namespace("1")
-			.pipe(emitter.namespace("2"))
+		emitter.of("1")
+			.pipe(emitter.of("2"))
 			.emit("test")
-			.unpipe(emitter.namespace("2"))
+			.unpipe(emitter.of("2"))
 			.emit("test");
 	});
 
@@ -94,7 +94,7 @@ describe("Namespaces", function() {
 	});
 
 	it("Should freeze and unfreeze namespace 'bled'", function(next) {
-		emitter.namespace("bled").on("test", function() {
+		emitter.of("bled").on("test", function() {
 			assert.ok(false);
 		}).freeze().emit("test").unfreeze().on("testo", function() {
 			next();
@@ -110,19 +110,19 @@ describe("Namespaces", function() {
 	});
 
 	it("Should collect stats in namespace '666'", function() {
-		emitter.namespace("666", {
+		emitter.of("666", {
 			stats: true
 		}).emit("test");
 
-		console.log(emitter.namespace("666").stats());
+		console.log(emitter.of("666").stats());
 
-		assert.equal(emitter.namespace("666").stats().test, 1);
+		assert.equal(emitter.of("666").stats().test, 1);
 	});
 
 	it("Should NOT collect stats in namespace '299'", function() {
-		emitter.namespace("299").emit("test");
+		emitter.of("299").emit("test");
 
-		assert.equal(emitter.namespace("299").stats().test, undefined);
+		assert.equal(emitter.of("299").stats().test, undefined);
 	});
 });
 
