@@ -196,7 +196,9 @@ const Namespace = function(options = {}, emitter = {}) {
 		return namespace.use(handler, true, skip);
 	}
 	this.catch = function(handler) {
-		namespace.catches.push(handler);
+		namespace.catches.push({
+			handler: handler
+		});
 
 		return namespace;
 	}
@@ -273,18 +275,16 @@ const Namespace = function(options = {}, emitter = {}) {
 		async.eachSeries(chain, function(handler, callback) {
 			if (handler.skip && skipMarked) return callback();
 
+			const fn = handler.handler;
+			const once = handler.once;
+
 			const next = function(error) {
 				callback(error || null);
 			}
 
-			if (typeof handler !== "function") {
-				once = handler.once;
-				handler = handler.handler; // lol
-			}
+			const result = fn.apply(namespace, getArgs(fn, next));
 
-			const result = handler.apply(namespace, getArgs(handler, next));
-
-			handlerExecuted(handler, result, next);
+			handlerExecuted(fn, result, next);
 
 			if (once) {
 				chain.splice(i, 1);
