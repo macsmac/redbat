@@ -57,12 +57,17 @@ const Namespace = function(options = {}, emitter = {}) {
 	}
 	this.getOutputStream = function() {
 		var output = new stream.Readable();
+		var _push;
+
+		namespace.use(function(type, args) {
+			_push(encodeURIComponent(type) + ";" + args.map(decodeURIComponent).join(","));
+		}, true);
 
 		output._read = function() {
-			namespace.useOnce(function(type, args) {
-				output.push(encodeURIComponent(type) + ";" + args.map(decodeURIComponent).join(","));
-			}, true);
+			_push = output.push.bind(this);
 		}
+
+		output.resume();
 
 		return output;
 	}
