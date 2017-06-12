@@ -117,6 +117,18 @@ const Namespace = function(options = {}, emitter = {}) {
 		[].push.apply(namespace.connected, namespace.namespacifyAll(arguments));
 		return namespace;
 	}
+	this.pipe2 = function(target) {
+		namespace.pipe(target);
+		target.pipe(namespace);
+	}
+
+	this.merge = function(target) {
+		namespace.listeners = namespace.namespacify(target).listeners.concat(namespace.listeners);
+	}
+	this.merge2 = function(target) {
+		namespace.merge(target);
+		target.merge(namespace);
+	}
 
 	this.unpipe = function(target) {
 		target = namespace.namespacify(target);

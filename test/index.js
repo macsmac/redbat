@@ -200,6 +200,12 @@ describe("Listeners", function() {
 		})
 		.emit("ev9");
 	});
+
+	it("Should merge namespace listeners", function() {
+		emitter.namespace("1111").on("test", function() {}).merge(emitter.namespace("2222").on("test", function() {}));
+
+		assert.equal(emitter.namespace("1111").listeners.length, 2);
+	});
 });
 
 describe("Middlewares", function() {
