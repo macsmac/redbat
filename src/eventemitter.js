@@ -45,7 +45,10 @@ module.exports = function(options) {
 	this.catch = namespace.catch;
 	this.listener = namespace.getListeners;
 	this.pipe = namespace.pipe;
+	this.pipe2 = namespace.pipe2;
 	this.unpipe = namespace.unpipe;
+	this.merge = namespace.merge;
+	this.merge2 = namespace.merge2;
 	this.freeze = namespace.freeze;
 	this.stats = namespace.stats;
 
