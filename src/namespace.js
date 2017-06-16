@@ -17,6 +17,9 @@ const Namespace = function(options = {}, emitter = {}) {
 
 	this._id = options.id;
 
+	this._input = null;
+	this._output = null;
+
 	this.reset = function() {
 		this.listeners = [];
 		this.middlewares = [];
@@ -41,6 +44,8 @@ const Namespace = function(options = {}, emitter = {}) {
 	}
 
 	this.getInputStream = function() {
+		if (namespace._input) return namespace._input;
+
 		var input = new stream.Writable();
 
 		input._write = function(chunk, encoding, callback) {
@@ -53,9 +58,11 @@ const Namespace = function(options = {}, emitter = {}) {
 			callback();
 		}
 
-		return input;
+		return namespace._input = input;
 	}
 	this.getOutputStream = function() {
+		if (namespace._output) return namespace._output;
+
 		var output = new stream.Readable();
 		var _push;
 
@@ -69,7 +76,7 @@ const Namespace = function(options = {}, emitter = {}) {
 
 		output.resume();
 
-		return output;
+		return namespace._output = output;
 	}
 
 	this._on = function(type, ttl, once, handler) {
