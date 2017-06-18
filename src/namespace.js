@@ -228,7 +228,11 @@ const Namespace = function(options = {}, emitter = {}) {
 	}
 
 	this.getListeners = function(query, del, each) {
-		return _.filter(namespace.listeners, function(e, i) {
+		var result = {
+			listeners: []
+		};
+
+		_.map(namespace.listeners, function(e, i) {
 			if (!e) {
 				return false;
 			}
@@ -236,10 +240,6 @@ const Namespace = function(options = {}, emitter = {}) {
 			if (e.once) {
 				namespace.listeners.splice(i, 1);
 			}
-
-			/*if (!e.ttl && e.type === query) {
-				return true;
-			}*/
 
 			if (e.ttl && e.ttl < Date.now()) {
 				namespace.listeners.splice(i, 1);
@@ -249,7 +249,7 @@ const Namespace = function(options = {}, emitter = {}) {
 			var ok;
 
 			if (e.type instanceof RegExp) {
-				ok = e.type.test(query);
+				ok = result.matched = query.match(e.type);
 			} else if (Array.isArray(e.type)) {
 				ok = _.indexOf(e.type, query) !== -1;
 			} else {
@@ -262,12 +262,18 @@ const Namespace = function(options = {}, emitter = {}) {
 				each(e);
 			}
 
-			return !e.freezed && ok;
+			if (!e.freezed && ok) {
+				result.listeners.push(e);
+			}
 		});
+
+		return result;
 	}
 
 	this.executeListeners = function(type, data, callback) {
-		const listeners = namespace.getListeners(type);
+		const result = namespace.getListeners(type);
+		const listeners = result.listeners;
+		const matched = result.matched;
 		const shouldCallWithNext = listeners.length > 1;
 
 		if (!listeners.length) {
@@ -276,18 +282,14 @@ const Namespace = function(options = {}, emitter = {}) {
 
 		if (shouldCallWithNext) {
 			async.eachSeries(listeners, function(listener, callback) {
-				listener.handler.apply(listener, _.concat(data, function(error) {
+				listener.handler.apply(result.matched ? matched : listener, _.concat(data, function(error) {
 					callback(error || null);
 				}));
 			}, function(error) {
 				callback(error || null);
 			});
 		} else {
-			if (data.length < 2) { // just for optimization, want to beat eventemitter2 lol
-				return listeners[0].handler(data[0]);
-			}
-
-			callback(listeners[0].handler.apply(listeners[0], data));
+			callback(listeners[0].handler.apply(result.matched ? matched : listeners[0], data));
 		}
 	}
 	this.executeChain = function(skipMarked, chain, getArgs, handlerExecuted, callback) {

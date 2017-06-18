@@ -192,7 +192,9 @@ describe("Listeners", function() {
 	});
 
 	it("Listener should be triggered by ev(any symbol here) / regexp testing", function(next) {
-		emitter.on(/ev./, function() {
+		emitter.on(/ev(.)/, function() {
+			assert.equal(this[1], "9");
+
 			next();
 		})
 		.on("another", function() {
