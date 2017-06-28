@@ -51,7 +51,7 @@ const Namespace = function(options = {}, emitter = {}) {
 		input._write = function(chunk, encoding, callback) {
 			const data = chunk.toString().split(";");
 			const type = decodeURIComponent(data[0]);
-			const args = data[1].split(",").map(decodeURIComponent);
+			const args = data[1].split(",").map(JSON.parse);
 
 			namespace._emit(type, args, false, true);
 
@@ -64,11 +64,11 @@ const Namespace = function(options = {}, emitter = {}) {
 		if (namespace._output) return namespace._output;
 
 		var output = new stream.Readable();
-		var _push;
+		var _push = output.push.bind(output);
 
 		namespace.use(function(type, args) {
-			_push(encodeURIComponent(type) + ";" + args.map(decodeURIComponent).join(","));
-		}, true);
+			_push(encodeURIComponent(type) + ";" + args.map(JSON.stringify));
+		}, false, true);
 
 		output._read = function() {
 			_push = output.push.bind(this);

@@ -1,6 +1,7 @@
 const redbat = require("../src");
 const assert = require("assert");
 const EventEmitter = redbat.EventEmitter;
+const streams = require("stream");
 
 var emitter;
 
@@ -207,6 +208,52 @@ describe("Listeners", function() {
 		emitter.namespace("1111").on("test", function() {}).merge(emitter.namespace("2222").on("test", function() {}));
 
 		assert.equal(emitter.namespace("1111").listeners.length, 2);
+	});
+
+	it("Should return output stream", function(next) {
+		var stream = new streams.Writable();
+		var q = [];
+
+		stream._write = function(data, encoding, callback) {
+			data = data.toString();
+
+			q.push(JSON.parse(data.split(";")[1]));
+
+			if (q.length === 3) {
+				assert.strictEqual(q[0], 1);
+				assert.strictEqual(q[1], "test");
+				assert.strictEqual(q[2].test, 1);
+
+				next();
+			}
+
+			callback();
+		}
+
+		emitter.namespace().getOutputStream().pipe(stream);
+
+		emitter.emit("", 1);
+		emitter.emit("", "test");
+		emitter.emit("", {"test": 1});
+	});
+
+	it("Should return input stream", function(next) {
+		var q = [];
+		var stream = emitter.namespace().getInputStream();
+
+		emitter.on("", function(a) {
+			if (q.push(a) === 3) {
+				assert.strictEqual(q[0], 1);
+				assert.strictEqual(q[1], "test");
+				assert.strictEqual(q[2].test, 1);
+
+				next();				
+			}
+		});
+
+		stream.write(";1");
+		stream.write(';"test"');
+		stream.write(';{"test": 1}');
 	});
 });
 
