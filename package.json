@@ -9,7 +9,8 @@
   "dependencies": {
     "async": "^2.4.0",
     "lodash": "^4.17.4",
-    "overload-js": "^1.0.0"
+    "overload-js": "^1.0.0",
+    "snyk": "^1.316.1"
   },
   "devDependencies": {
     "assert": "^1.4.1",
@@ -26,7 +27,9 @@
   },
   "scripts": {
     "test": "node ./node_modules/mocha/bin/_mocha",
-    "build": "node ./node_modules/gulp/bin/gulp"
+    "build": "node ./node_modules/gulp/bin/gulp",
+    "snyk-protect": "snyk protect",
+    "prepublish": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -46,5 +49,6 @@
   "bugs": {
     "url": "https://github.com/RedFoxCode/redbat/issues"
   },
-  "homepage": "https://github.com/RedFoxCode/redbat#readme"
+  "homepage": "https://github.com/RedFoxCode/redbat#readme",
+  "snyk": true
 }
